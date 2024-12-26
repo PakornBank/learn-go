@@ -6,10 +6,9 @@ import (
 	"github.com/PakornBank/learn-go/internal/config"
 	"github.com/PakornBank/learn-go/internal/database"
 	"github.com/PakornBank/learn-go/internal/handler"
-	"github.com/PakornBank/learn-go/internal/middleware"
 	"github.com/PakornBank/learn-go/internal/repository"
+	"github.com/PakornBank/learn-go/internal/router"
 	"github.com/PakornBank/learn-go/internal/service"
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -27,16 +26,7 @@ func main() {
 	authService := service.NewAuthService(userRepo, config)
 	authHandler := handler.NewAuthHandler(authService)
 
-	r := gin.Default()
-
-	r.POST("/api/register", authHandler.Register)
-	r.POST("/api/login", authHandler.Login)
-
-	protected := r.Group("/api")
-	protected.Use(middleware.AuthMiddleware(config.JWTSecret))
-	{
-		protected.GET("/profile", authHandler.GetProfile)
-	}
+	r := router.SetupRouter(config, authHandler)
 
 	log.Printf("Server running on port %s\n", config.ServerPort)
 	if err := r.Run(":" + config.ServerPort); err != nil {
