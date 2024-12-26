@@ -4,6 +4,9 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -65,33 +68,30 @@ func TestLoadConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Clearenv()
+
 			for k, v := range tt.envVars {
 				os.Setenv(k, v)
 			}
 
 			got, err := LoadConfig()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LoadConfig() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
 
 			if tt.wantErr {
-				if err == nil || err.Error() != tt.errContains {
-					t.Errorf("LoadConfig() error = %v, want error containing %v", err, tt.errContains)
-				}
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errContains)
 				return
 			}
 
-			if !(got.DBHost == tt.wantConfig.DBHost &&
-				got.DBUser == tt.wantConfig.DBUser &&
-				got.DBPassword == tt.wantConfig.DBPassword &&
-				got.DBName == tt.wantConfig.DBName &&
-				got.DBPort == tt.wantConfig.DBPort &&
-				got.ServerPort == tt.wantConfig.ServerPort &&
-				got.JWTSecret == tt.wantConfig.JWTSecret &&
-				got.TokenExipryDur == tt.wantConfig.TokenExipryDur) {
-				t.Errorf("LoadConfig() = %v, want %v", got, tt.wantConfig)
-			}
+			require.NoError(t, err)
+			assert.NotNil(t, got)
+
+			assert.Equal(t, tt.wantConfig.DBHost, got.DBHost)
+			assert.Equal(t, tt.wantConfig.DBUser, got.DBUser)
+			assert.Equal(t, tt.wantConfig.DBPassword, got.DBPassword)
+			assert.Equal(t, tt.wantConfig.DBName, got.DBName)
+			assert.Equal(t, tt.wantConfig.DBPort, got.DBPort)
+			assert.Equal(t, tt.wantConfig.ServerPort, got.ServerPort)
+			assert.Equal(t, tt.wantConfig.JWTSecret, got.JWTSecret)
+			assert.Equal(t, tt.wantConfig.TokenExipryDur, got.TokenExipryDur)
 		})
 	}
 }
@@ -127,9 +127,8 @@ func TestGetEnv(t *testing.T) {
 				os.Setenv(tt.key, tt.envValue)
 			}
 
-			if got := getEnv(tt.key, tt.defaultValue); got != tt.want {
-				t.Errorf("getEnv() = %v, want %v", got, tt.want)
-			}
+			got := getEnv(tt.key, tt.defaultValue)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -143,8 +142,6 @@ func TestGetDBURL(t *testing.T) {
 		DBPort:     "5432",
 	}
 
-	want := "host=test-host user=test-user password=test-password dbname=test-name port=5432 sslmode=disable"
-	if got := config.GetDBURL(); got != want {
-		t.Errorf("GetDBURL() = %v, want %v", got, want)
-	}
+	expectedURL := "host=test-host user=test-user password=test-password dbname=test-name port=5432 sslmode=disable"
+	assert.Equal(t, expectedURL, config.GetDBURL())
 }
