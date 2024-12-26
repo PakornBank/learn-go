@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/PakornBank/learn-go/internal/config"
 	"github.com/PakornBank/learn-go/internal/model"
 	"github.com/PakornBank/learn-go/internal/repository"
 	"github.com/golang-jwt/jwt/v4"
@@ -28,11 +29,11 @@ type AuthService struct {
 	tokenExpiry time.Duration
 }
 
-func NewAuthService(userRepo *repository.UserRepository, jwtSecret string, tokenExpiry time.Duration) *AuthService {
+func NewAuthService(userRepo *repository.UserRepository, config *config.Config) *AuthService {
 	return &AuthService{
 		userRepo:    userRepo,
-		jwtSecret:   []byte(jwtSecret),
-		tokenExpiry: tokenExpiry,
+		jwtSecret:   []byte(config.JWTSecret),
+		tokenExpiry: config.TokenExipryDur,
 	}
 }
 
