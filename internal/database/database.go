@@ -17,7 +17,6 @@ func NewDataBase(config *config.Config) (*gorm.DB, error) {
 
 	if err := db.AutoMigrate(&model.User{}); err != nil {
 		return nil, fmt.Errorf("failed to migrate database: %w", err)
-
 	}
 
 	return db, nil
