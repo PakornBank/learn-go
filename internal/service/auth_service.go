@@ -7,10 +7,15 @@ import (
 
 	"github.com/PakornBank/learn-go/internal/config"
 	"github.com/PakornBank/learn-go/internal/model"
-	"github.com/PakornBank/learn-go/internal/repository"
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type Repository interface {
+	Create(ctx context.Context, user *model.User) error
+	FindByEmail(ctx context.Context, email string) (*model.User, error)
+	FindById(ctx context.Context, id string) (*model.User, error)
+}
 
 type RegisterInput struct {
 	Email    string `json:"email" binding:"required,email"`
@@ -24,12 +29,12 @@ type LoginInput struct {
 }
 
 type AuthService struct {
-	userRepo    *repository.UserRepository
+	userRepo    Repository
 	jwtSecret   []byte
 	tokenExpiry time.Duration
 }
 
-func NewAuthService(userRepo *repository.UserRepository, config *config.Config) *AuthService {
+func NewAuthService(userRepo Repository, config *config.Config) *AuthService {
 	return &AuthService{
 		userRepo:    userRepo,
 		jwtSecret:   []byte(config.JWTSecret),
