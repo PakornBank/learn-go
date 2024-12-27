@@ -1,17 +1,25 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/PakornBank/learn-go/internal/model"
 	"github.com/PakornBank/learn-go/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-type AuthHandler struct {
-	authService *service.AuthService
+type Service interface {
+	Register(ctx context.Context, input service.RegisterInput) (*model.User, error)
+	Login(ctx context.Context, input service.LoginInput) (string, error)
+	GetUserById(ctx context.Context, id string) (*model.User, error)
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+type AuthHandler struct {
+	authService Service
+}
+
+func NewAuthHandler(authService Service) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
