@@ -2,17 +2,17 @@ package service
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/PakornBank/learn-go/internal/config"
 	"github.com/PakornBank/learn-go/internal/model"
+	"github.com/PakornBank/learn-go/internal/testutil"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type MockRepository struct {
@@ -40,7 +40,7 @@ func (m *MockRepository) FindById(ctx context.Context, id string) (*model.User, 
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
-func setupTestService() (*AuthService, *MockRepository) {
+func setupTest(t *testing.T) (*AuthService, *MockRepository) {
 	mockRepo := new(MockRepository)
 	config := &config.Config{
 		JWTSecret:      "test-secret",
@@ -51,48 +51,47 @@ func setupTestService() (*AuthService, *MockRepository) {
 }
 
 func TestRegister(t *testing.T) {
-	ctx := context.Background()
-	testCases := []struct {
+	mockUser := testutil.NewMockUser()
+
+	tests := []struct {
 		name        string
 		input       RegisterInput
-		setupMock   func(*MockRepository)
+		mockFn      func(*MockRepository)
 		wantErr     bool
 		errContains string
 	}{
 		{
 			name: "successful registration",
 			input: RegisterInput{
-				Email:    "test@example.com",
-				Password: "password123",
-				FullName: "Test User",
+				Email:    mockUser.Email,
+				Password: "password",
+				FullName: mockUser.FullName,
 			},
-			setupMock: func(repo *MockRepository) {
-				repo.On("FindByEmail", ctx, "test@example.com").Return(nil, nil)
-				repo.On("Create", ctx, mock.AnythingOfType("*model.User")).Return(nil)
+			mockFn: func(repo *MockRepository) {
+				repo.On("FindByEmail", mock.Anything, mockUser.Email).Return(nil, gorm.ErrRecordNotFound)
+				repo.On("Create", mock.Anything, mock.AnythingOfType("*model.User")).Return(nil)
 			},
 			wantErr: false,
 		},
 		{
 			name: "email already exists",
 			input: RegisterInput{
-				Email:    "existing@example.com",
-				Password: "password123",
-				FullName: "Test User",
+				Email:    mockUser.Email,
+				Password: "password",
+				FullName: mockUser.FullName,
 			},
-			setupMock: func(repo *MockRepository) {
-				existingUser := &model.User{Email: "existing@example.com"}
-				repo.On("FindByEmail", ctx, "existing@example.com").Return(existingUser, nil)
+			mockFn: func(repo *MockRepository) {
+				repo.On("FindByEmail", mock.Anything, mockUser.Email).Return(&mockUser, nil)
 			},
 			wantErr:     true,
 			errContains: "email already registered",
 		},
 	}
 
-	for _, tt := range testCases {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service, mockRepo := setupTestService()
-			tt.setupMock(mockRepo)
-
+			service, mockRepo := setupTest(t)
+			tt.mockFn(mockRepo)
 			user, err := service.Register(context.Background(), tt.input)
 
 			if tt.wantErr {
@@ -111,44 +110,37 @@ func TestRegister(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	ctx := context.Background()
-	testCases := []struct {
+	mockUser := testutil.NewMockUser()
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+
+	tests := []struct {
 		name        string
 		input       LoginInput
-		setupMock   func(*MockRepository)
+		mockFn      func(*MockRepository)
 		wantErr     bool
 		errContains string
 	}{
 		{
 			name: "successful login",
 			input: LoginInput{
-				Email:    "test@example.com",
-				Password: "password123",
+				Email:    mockUser.Email,
+				Password: "password",
 			},
-			setupMock: func(repo *MockRepository) {
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-				user := &model.User{
-					ID:           uuid.New(),
-					Email:        "test@example.com",
-					PasswordHash: string(hashedPassword),
-				}
-				repo.On("FindByEmail", ctx, "test@example.com").Return(user, nil)
+			mockFn: func(repo *MockRepository) {
+				mockUser.PasswordHash = string(hashedPassword)
+				repo.On("FindByEmail", mock.Anything, mockUser.Email).Return(&mockUser, nil)
 			},
 			wantErr: false,
 		},
 		{
-			name: "invalid credentials - wrong password",
+			name: "invalid credentials",
 			input: LoginInput{
-				Email:    "test@example.com",
+				Email:    mockUser.Email,
 				Password: "wrongpassword",
 			},
-			setupMock: func(repo *MockRepository) {
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-				user := &model.User{
-					Email:        "test@example.com",
-					PasswordHash: string(hashedPassword),
-				}
-				repo.On("FindByEmail", ctx, "test@example.com").Return(user, nil)
+			mockFn: func(repo *MockRepository) {
+				mockUser.PasswordHash = string(hashedPassword)
+				repo.On("FindByEmail", mock.Anything, mockUser.Email).Return(&mockUser, nil)
 			},
 			wantErr:     true,
 			errContains: "invalid credentials",
@@ -157,21 +149,20 @@ func TestLogin(t *testing.T) {
 			name: "user not found",
 			input: LoginInput{
 				Email:    "nonexistent@example.com",
-				Password: "password123",
+				Password: "password",
 			},
-			setupMock: func(repo *MockRepository) {
-				repo.On("FindByEmail", ctx, "nonexistent@example.com").Return(nil, errors.New("user not found"))
+			mockFn: func(repo *MockRepository) {
+				repo.On("FindByEmail", mock.Anything, "nonexistent@example.com").Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantErr:     true,
 			errContains: "invalid credentials",
 		},
 	}
 
-	for _, tt := range testCases {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service, mockRepo := setupTestService()
-			tt.setupMock(mockRepo)
-
+			service, mockRepo := setupTest(t)
+			tt.mockFn(mockRepo)
 			token, err := service.Login(context.Background(), tt.input)
 
 			if tt.wantErr {
@@ -188,49 +179,49 @@ func TestLogin(t *testing.T) {
 }
 
 func TestGetUserById(t *testing.T) {
-	testCases := []struct {
-		name      string
-		userId    string
-		setupMock func(*MockRepository)
-		wantErr   bool
+	mockUser := testutil.NewMockUser()
+
+	tests := []struct {
+		name    string
+		id      string
+		mockFn  func(*MockRepository)
+		want    *model.User
+		wantErr bool
+		errType error
 	}{
 		{
-			name:   "successful user retrieval",
-			userId: "123e4567-e89b-12d3-a456-426614174000",
-			setupMock: func(repo *MockRepository) {
-				user := &model.User{
-					ID:       uuid.MustParse("123e4567-e89b-12d3-a456-426614174000"),
-					Email:    "test@example.com",
-					FullName: "Test User",
-				}
-				repo.On("FindById", mock.Anything, "123e4567-e89b-12d3-a456-426614174000").Return(user, nil)
+			name: "user found",
+			id:   mockUser.ID.String(),
+			mockFn: func(repo *MockRepository) {
+				repo.On("FindById", mock.Anything, mockUser.ID.String()).Return(&mockUser, nil)
 			},
+			want:    &mockUser,
 			wantErr: false,
 		},
 		{
-			name:   "user not found",
-			userId: "123e4567-e89b-12d3-a456-426614174000",
-			setupMock: func(repo *MockRepository) {
-				repo.On("FindById", mock.Anything, "123e4567-e89b-12d3-a456-426614174000").Return(nil, errors.New("user not found"))
+			name: "user not found",
+			id:   mockUser.ID.String(),
+			mockFn: func(repo *MockRepository) {
+				repo.On("FindById", mock.Anything, mockUser.ID.String()).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantErr: true,
+			errType: gorm.ErrRecordNotFound,
 		},
 	}
 
-	for _, tt := range testCases {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service, mockRepo := setupTestService()
-			tt.setupMock(mockRepo)
-
-			user, err := service.GetUserById(context.Background(), tt.userId)
+			service, mockRepo := setupTest(t)
+			tt.mockFn(mockRepo)
+			got, err := service.GetUserById(context.Background(), tt.id)
 
 			if tt.wantErr {
 				assert.Error(t, err)
-				assert.Nil(t, user)
+				assert.Equal(t, tt.errType, err)
+				assert.Nil(t, got)
 			} else {
 				assert.NoError(t, err)
-				assert.NotNil(t, user)
-				assert.Equal(t, tt.userId, user.ID.String())
+				assert.Equal(t, tt.want, got)
 			}
 			mockRepo.AssertExpectations(t)
 		})
@@ -238,13 +229,10 @@ func TestGetUserById(t *testing.T) {
 }
 
 func TestGenerateToken(t *testing.T) {
-	service, _ := setupTestService()
-	user := &model.User{
-		ID:    uuid.New(),
-		Email: "test@example.com",
-	}
+	service, _ := setupTest(t)
+	mockUser := testutil.NewMockUser()
 
-	token, err := service.generateToken(user)
+	token, err := service.generateToken(&mockUser)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
 
@@ -257,6 +245,6 @@ func TestGenerateToken(t *testing.T) {
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	assert.True(t, ok)
-	assert.Equal(t, user.ID.String(), claims["user_id"])
-	assert.Equal(t, user.Email, claims["email"])
+	assert.Equal(t, mockUser.ID.String(), claims["user_id"])
+	assert.Equal(t, mockUser.Email, claims["email"])
 }
