@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"github.com/PakornBank/learn-go/internal/model"
 	"gorm.io/gorm"
@@ -24,9 +23,6 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*model.
 	var user model.User
 
 	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
 		return nil, err
 	}
 
@@ -37,9 +33,6 @@ func (r *UserRepository) FindById(ctx context.Context, id string) (*model.User, 
 	var user model.User
 
 	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
-		}
 		return nil, err
 	}
 
