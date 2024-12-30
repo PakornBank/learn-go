@@ -40,7 +40,7 @@ func (m *MockRepository) FindById(ctx context.Context, id string) (*model.User, 
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
-func setupTest(t *testing.T) (*AuthService, *MockRepository) {
+func setupTest() (*AuthService, *MockRepository) {
 	mockRepo := new(MockRepository)
 	config := &config.Config{
 		JWTSecret:      "test-secret",
@@ -104,7 +104,7 @@ func TestAuthService_Register(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service, mockRepo := setupTest(t)
+			service, mockRepo := setupTest()
 			tt.mockFn(mockRepo)
 			user, err := service.Register(context.Background(), tt.input)
 
@@ -175,7 +175,7 @@ func TestAuthService_Login(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service, mockRepo := setupTest(t)
+			service, mockRepo := setupTest()
 			tt.mockFn(mockRepo)
 			token, err := service.Login(context.Background(), tt.input)
 
@@ -225,7 +225,7 @@ func TestAuthService_GetUserById(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service, mockRepo := setupTest(t)
+			service, mockRepo := setupTest()
 			tt.mockFn(mockRepo)
 			got, err := service.GetUserById(context.Background(), tt.id)
 
@@ -243,7 +243,7 @@ func TestAuthService_GetUserById(t *testing.T) {
 }
 
 func TestGenerateToken(t *testing.T) {
-	service, _ := setupTest(t)
+	service, _ := setupTest()
 	mockUser := testutil.NewMockUser()
 
 	token, err := service.generateToken(&mockUser)
