@@ -37,8 +37,10 @@ An authentication system built with Go, featuring JWT authentication, PostgreSQL
 │   │   └── user.go
 │   ├── repository
 │   │   └── user_repository.go
-│   └── service
-│       └── auth_service.go
+│   ├── service
+│   │   └── auth_service.go
+│   └── router
+│       └── router.go
 ├── docker-compose.yml
 ├── .env
 ├── .env.example
