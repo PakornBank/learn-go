@@ -1,11 +1,16 @@
 package router
 
 import (
-	"github.com/PakornBank/learn-go/internal/handler"
 	"github.com/gin-gonic/gin"
 )
 
-func setupAuthRoutes(router *gin.Engine, authHandler *handler.AuthHandler) {
+type Handler interface {
+	Register(*gin.Context)
+	Login(*gin.Context)
+	GetProfile(*gin.Context)
+}
+
+func setupAuthRoutes(router *gin.Engine, authHandler Handler) {
 	r := router.Group("/api")
 	{
 		r.POST("/register", authHandler.Register)
