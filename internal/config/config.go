@@ -1,3 +1,4 @@
+// Package config provides configuration management for the application.
 package config
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Config holds all configuration values for the application.
 type Config struct {
 	DBHost         string
 	DBUser         string
@@ -19,12 +21,14 @@ type Config struct {
 	TokenExpiryDur time.Duration
 }
 
+// LoadConfig reads configuration from environment variables and returns a Config.
+// It returns an error if required values are missing.
 func LoadConfig() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
 		fmt.Printf("Warning: .env file not found: %v\n", err)
 	}
 
-	config := &Config{
+	cfg := &Config{
 		DBHost:         getEnv("DB_HOST", "localhost"),
 		DBUser:         getEnv("DB_USER", "postgres"),
 		DBPassword:     getEnv("DB_PASSWORD", ""),
@@ -35,13 +39,14 @@ func LoadConfig() (*Config, error) {
 		TokenExpiryDur: 24 * time.Hour,
 	}
 
-	if config.JWTSecret == "your-secret-key" {
-		return nil, fmt.Errorf("JWT_SECRET must be set in .env")
+	if cfg.JWTSecret == "your-secret-key" {
+		return nil, fmt.Errorf("jwt secret must be set in environment")
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
+// getEnv retrieves an environment variable value or returns the provided default.
 func getEnv(key, defaultValue string) string {
 	value := os.Getenv(key)
 	if value == "" {
@@ -50,7 +55,8 @@ func getEnv(key, defaultValue string) string {
 	return value
 }
 
-func (c *Config) GetDBURL() string {
+// DBURL returns the formatted database connection string.
+func (c *Config) DBURL() string {
 	return fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		c.DBHost, c.DBUser, c.DBPassword, c.DBName, c.DBPort,

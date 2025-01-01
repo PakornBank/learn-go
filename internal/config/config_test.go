@@ -11,24 +11,24 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	tests := []struct {
-		name        string
-		envVars     map[string]string
-		wantConfig  *Config
-		wantErr     bool
-		errContains string
+		name    string
+		env     map[string]string
+		want    *Config
+		wantErr bool
+		errMsg  string
 	}{
 		{
-			name:        "default values without JWT secret",
-			envVars:     map[string]string{},
-			wantErr:     true,
-			errContains: "JWT_SECRET must be set in .env",
+			name:    "default values without JWT secret",
+			env:     map[string]string{},
+			wantErr: true,
+			errMsg:  "jwt secret must be set in environment",
 		},
 		{
 			name: "default values with JWT secret",
-			envVars: map[string]string{
+			env: map[string]string{
 				"JWT_SECRET": "test-secret",
 			},
-			wantConfig: &Config{
+			want: &Config{
 				DBHost:         "localhost",
 				DBUser:         "postgres",
 				DBPassword:     "",
@@ -42,7 +42,7 @@ func TestLoadConfig(t *testing.T) {
 		},
 		{
 			name: "custom .env values",
-			envVars: map[string]string{
+			env: map[string]string{
 				"DB_HOST":     "test-db-host",
 				"DB_USER":     "test-db-user",
 				"DB_PASSWORD": "test-db-password",
@@ -51,7 +51,7 @@ func TestLoadConfig(t *testing.T) {
 				"SERVER_PORT": "5433",
 				"JWT_SECRET":  "test-secret",
 			},
-			wantConfig: &Config{
+			want: &Config{
 				DBHost:         "test-db-host",
 				DBUser:         "test-db-user",
 				DBPassword:     "test-db-password",
@@ -69,54 +69,45 @@ func TestLoadConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Clearenv()
 
-			for k, v := range tt.envVars {
+			for k, v := range tt.env {
 				os.Setenv(k, v)
 			}
 
 			got, err := LoadConfig()
-
 			if tt.wantErr {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.errContains)
+				assert.Contains(t, err.Error(), tt.errMsg)
 				return
 			}
 
 			require.NoError(t, err)
 			assert.NotNil(t, got)
-
-			assert.Equal(t, tt.wantConfig.DBHost, got.DBHost)
-			assert.Equal(t, tt.wantConfig.DBUser, got.DBUser)
-			assert.Equal(t, tt.wantConfig.DBPassword, got.DBPassword)
-			assert.Equal(t, tt.wantConfig.DBName, got.DBName)
-			assert.Equal(t, tt.wantConfig.DBPort, got.DBPort)
-			assert.Equal(t, tt.wantConfig.ServerPort, got.ServerPort)
-			assert.Equal(t, tt.wantConfig.JWTSecret, got.JWTSecret)
-			assert.Equal(t, tt.wantConfig.TokenExpiryDur, got.TokenExpiryDur)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func TestGetEnv(t *testing.T) {
 	tests := []struct {
-		name         string
-		key          string
-		defaultValue string
-		envValue     string
-		want         string
+		name     string
+		key      string
+		defValue string
+		envValue string
+		want     string
 	}{
 		{
-			name:         "existing environment variable",
-			key:          "TEST_KEY",
-			defaultValue: "default",
-			envValue:     "custom",
-			want:         "custom",
+			name:     "existing environment variable",
+			key:      "TEST_KEY",
+			defValue: "default",
+			envValue: "custom",
+			want:     "custom",
 		},
 		{
-			name:         "non-existing environment variable",
-			key:          "TEST_KEY",
-			defaultValue: "default",
-			envValue:     "",
-			want:         "default",
+			name:     "non-existing environment variable",
+			key:      "TEST_KEY",
+			defValue: "default",
+			envValue: "",
+			want:     "default",
 		},
 	}
 
@@ -127,14 +118,14 @@ func TestGetEnv(t *testing.T) {
 				os.Setenv(tt.key, tt.envValue)
 			}
 
-			got := getEnv(tt.key, tt.defaultValue)
+			got := getEnv(tt.key, tt.defValue)
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestGetDBURL(t *testing.T) {
-	config := &Config{
+func TestDBURL(t *testing.T) {
+	cfg := &Config{
 		DBHost:     "test-host",
 		DBUser:     "test-user",
 		DBPassword: "test-password",
@@ -142,6 +133,6 @@ func TestGetDBURL(t *testing.T) {
 		DBPort:     "5432",
 	}
 
-	expectedURL := "host=test-host user=test-user password=test-password dbname=test-name port=5432 sslmode=disable"
-	assert.Equal(t, expectedURL, config.GetDBURL())
+	want := "host=test-host user=test-user password=test-password dbname=test-name port=5432 sslmode=disable"
+	assert.Equal(t, want, cfg.DBURL())
 }
