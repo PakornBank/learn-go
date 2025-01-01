@@ -38,7 +38,7 @@ func NewAuthService(userRepo Repository, config *config.Config) *AuthService {
 	return &AuthService{
 		userRepo:    userRepo,
 		jwtSecret:   []byte(config.JWTSecret),
-		tokenExpiry: config.TokenExipryDur,
+		tokenExpiry: config.TokenExpiryDur,
 	}
 }
 

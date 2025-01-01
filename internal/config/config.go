@@ -16,7 +16,7 @@ type Config struct {
 	DBPort         string
 	ServerPort     string
 	JWTSecret      string
-	TokenExipryDur time.Duration
+	TokenExpiryDur time.Duration
 }
 
 func LoadConfig() (*Config, error) {
@@ -32,7 +32,7 @@ func LoadConfig() (*Config, error) {
 		DBPort:         getEnv("DB_PORT", "5432"),
 		ServerPort:     getEnv("SERVER_PORT", "8080"),
 		JWTSecret:      getEnv("JWT_SECRET", "your-secret-key"),
-		TokenExipryDur: 24 * time.Hour,
+		TokenExpiryDur: 24 * time.Hour,
 	}
 
 	if config.JWTSecret == "your-secret-key" {

@@ -44,7 +44,7 @@ func setupTest() (*AuthService, *MockRepository) {
 	mockRepo := new(MockRepository)
 	config := &config.Config{
 		JWTSecret:      "test-secret",
-		TokenExipryDur: time.Hour * 24,
+		TokenExpiryDur: time.Hour * 24,
 	}
 	service := NewAuthService(mockRepo, config)
 	return service, mockRepo
@@ -54,14 +54,14 @@ func TestNewAuthService(t *testing.T) {
 	mockRepo := new(MockRepository)
 	config := &config.Config{
 		JWTSecret:      "test-secret",
-		TokenExipryDur: time.Hour * 24,
+		TokenExpiryDur: time.Hour * 24,
 	}
 	authService := NewAuthService(mockRepo, config)
 
 	assert.NotNil(t, authService)
 	assert.Equal(t, mockRepo, authService.userRepo)
 	assert.Equal(t, []byte(config.JWTSecret), authService.jwtSecret)
-	assert.Equal(t, config.TokenExipryDur, authService.tokenExpiry)
+	assert.Equal(t, config.TokenExpiryDur, authService.tokenExpiry)
 }
 
 func TestAuthService_Register(t *testing.T) {

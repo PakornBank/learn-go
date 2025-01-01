@@ -36,7 +36,7 @@ func TestLoadConfig(t *testing.T) {
 				DBPort:         "5432",
 				ServerPort:     "8080",
 				JWTSecret:      "test-secret",
-				TokenExipryDur: 24 * time.Hour,
+				TokenExpiryDur: 24 * time.Hour,
 			},
 			wantErr: false,
 		},
@@ -59,7 +59,7 @@ func TestLoadConfig(t *testing.T) {
 				DBPort:         "8081",
 				ServerPort:     "5433",
 				JWTSecret:      "test-secret",
-				TokenExipryDur: 24 * time.Hour,
+				TokenExpiryDur: 24 * time.Hour,
 			},
 			wantErr: false,
 		},
@@ -91,7 +91,7 @@ func TestLoadConfig(t *testing.T) {
 			assert.Equal(t, tt.wantConfig.DBPort, got.DBPort)
 			assert.Equal(t, tt.wantConfig.ServerPort, got.ServerPort)
 			assert.Equal(t, tt.wantConfig.JWTSecret, got.JWTSecret)
-			assert.Equal(t, tt.wantConfig.TokenExipryDur, got.TokenExipryDur)
+			assert.Equal(t, tt.wantConfig.TokenExpiryDur, got.TokenExpiryDur)
 		})
 	}
 }
