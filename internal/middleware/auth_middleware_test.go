@@ -25,9 +25,9 @@ func setupTest(jwtSecret string) *gin.Engine {
 	return r
 }
 
-func generateTestToken(userId string, email string, jwtSecret string, expiry time.Duration) string {
+func generateTestToken(userID string, email string, jwtSecret string, expiry time.Duration) string {
 	claims := jwt.MapClaims{
-		"user_id": userId,
+		"user_id": userID,
 		"email":   email,
 		"exp":     time.Now().Add(expiry).Unix(),
 	}
@@ -38,9 +38,9 @@ func generateTestToken(userId string, email string, jwtSecret string, expiry tim
 
 func TestAuthMiddleware(t *testing.T) {
 	const (
-		TEST_SECRET = "test-secret"
-		TEST_ID     = "test-user-id"
-		TEST_EMAIL  = "test@email.com"
+		testSecret = "test-secret"
+		testID     = "test-user-id"
+		testEmail  = "test@email.com"
 	)
 
 	tests := []struct {
@@ -52,14 +52,14 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "valid token",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken(TEST_ID, TEST_EMAIL, TEST_SECRET, time.Hour)
+				return "Bearer " + generateTestToken(testID, testEmail, testSecret, time.Hour)
 			},
 			wantCode: http.StatusOK,
 		},
 		{
 			name: "expired token",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken(TEST_ID, TEST_EMAIL, TEST_SECRET, -time.Hour)
+				return "Bearer " + generateTestToken(testID, testEmail, testSecret, -time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token",
@@ -83,7 +83,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "missing Bearer prifix",
 			generateAuthHeader: func() string {
-				return generateTestToken(TEST_ID, TEST_EMAIL, TEST_SECRET, time.Hour)
+				return generateTestToken(testID, testEmail, testSecret, time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid authorization header format",
@@ -92,8 +92,8 @@ func TestAuthMiddleware(t *testing.T) {
 			name: "wrong signing method",
 			generateAuthHeader: func() string {
 				token := jwt.NewWithClaims(jwt.SigningMethodNone, jwt.MapClaims{
-					"user_id": TEST_ID,
-					"email":   TEST_EMAIL,
+					"user_id": testID,
+					"email":   testEmail,
 					"exp":     time.Now().Add(time.Hour).Unix(),
 				})
 				signedToken, _ := token.SignedString(jwt.UnsafeAllowNoneSignatureType)
@@ -106,10 +106,10 @@ func TestAuthMiddleware(t *testing.T) {
 			name: "invalid token claims",
 			generateAuthHeader: func() string {
 				claims := jwt.MapClaims{
-					"id": TEST_ID,
+					"id": testID,
 				}
 				token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-				signedToken, _ := token.SignedString([]byte(TEST_SECRET))
+				signedToken, _ := token.SignedString([]byte(testSecret))
 				return "Bearer " + signedToken
 			},
 			wantCode:    http.StatusUnauthorized,
@@ -118,7 +118,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "missing user_id claim",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken("", TEST_EMAIL, TEST_SECRET, time.Hour)
+				return "Bearer " + generateTestToken("", testEmail, testSecret, time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token claims",
@@ -126,7 +126,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "missing email claim",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken(TEST_ID, "", TEST_SECRET, time.Hour)
+				return "Bearer " + generateTestToken(testID, "", testSecret, time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token claims",
@@ -135,7 +135,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			router := setupTest(TEST_SECRET)
+			router := setupTest(testSecret)
 
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if authHeader := tt.generateAuthHeader(); authHeader != "" {
@@ -152,8 +152,8 @@ func TestAuthMiddleware(t *testing.T) {
 			assert.NoError(t, err)
 
 			if tt.wantCode == http.StatusOK {
-				assert.Equal(t, TEST_ID, response["user_id"])
-				assert.Equal(t, TEST_EMAIL, response["email"])
+				assert.Equal(t, testID, response["user_id"])
+				assert.Equal(t, testEmail, response["email"])
 			} else {
 				assert.Contains(t, response["error"], tt.errContains)
 			}

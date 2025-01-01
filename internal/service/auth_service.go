@@ -14,7 +14,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, user *model.User) error
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
-	FindById(ctx context.Context, id string) (*model.User, error)
+	FindByID(ctx context.Context, id string) (*model.User, error)
 }
 
 type RegisterInput struct {
@@ -90,6 +90,6 @@ func (s *AuthService) generateToken(user *model.User) (string, error) {
 	return token.SignedString(s.jwtSecret)
 }
 
-func (s *AuthService) GetUserById(ctx context.Context, id string) (*model.User, error) {
-	return s.userRepo.FindById(ctx, id)
+func (s *AuthService) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+	return s.userRepo.FindByID(ctx, id)
 }

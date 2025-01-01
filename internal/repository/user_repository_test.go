@@ -153,7 +153,7 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 	}
 }
 
-func TestUserRepository_FindById(t *testing.T) {
+func TestUserRepository_FindByID(t *testing.T) {
 	sqlDB, _, mock, userRepo := setupTest(t)
 	defer sqlDB.Close()
 
@@ -198,7 +198,7 @@ func TestUserRepository_FindById(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.mockFn(mock)
-			got, err := userRepo.FindById(context.Background(), tt.id.String())
+			got, err := userRepo.FindByID(context.Background(), tt.id.String())
 
 			if tt.wantErr {
 				assert.Error(t, err)

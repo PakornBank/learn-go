@@ -32,7 +32,7 @@ func (m *MockRepository) FindByEmail(ctx context.Context, email string) (*model.
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
-func (m *MockRepository) FindById(ctx context.Context, id string) (*model.User, error) {
+func (m *MockRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -192,7 +192,7 @@ func TestAuthService_Login(t *testing.T) {
 	}
 }
 
-func TestAuthService_GetUserById(t *testing.T) {
+func TestAuthService_GetUserByID(t *testing.T) {
 	mockUser := testutil.NewMockUser()
 
 	tests := []struct {
@@ -207,7 +207,7 @@ func TestAuthService_GetUserById(t *testing.T) {
 			name: "user found",
 			id:   mockUser.ID.String(),
 			mockFn: func(repo *MockRepository) {
-				repo.On("FindById", mock.Anything, mockUser.ID.String()).Return(&mockUser, nil)
+				repo.On("FindByID", mock.Anything, mockUser.ID.String()).Return(&mockUser, nil)
 			},
 			want:    &mockUser,
 			wantErr: false,
@@ -216,7 +216,7 @@ func TestAuthService_GetUserById(t *testing.T) {
 			name: "user not found",
 			id:   mockUser.ID.String(),
 			mockFn: func(repo *MockRepository) {
-				repo.On("FindById", mock.Anything, mockUser.ID.String()).Return(nil, gorm.ErrRecordNotFound)
+				repo.On("FindByID", mock.Anything, mockUser.ID.String()).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantErr: true,
 			errType: gorm.ErrRecordNotFound,
@@ -227,7 +227,7 @@ func TestAuthService_GetUserById(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			service, mockRepo := setupTest()
 			tt.mockFn(mockRepo)
-			got, err := service.GetUserById(context.Background(), tt.id)
+			got, err := service.GetUserByID(context.Background(), tt.id)
 
 			if tt.wantErr {
 				assert.Error(t, err)

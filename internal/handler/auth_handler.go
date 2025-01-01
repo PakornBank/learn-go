@@ -12,7 +12,7 @@ import (
 type Service interface {
 	Register(ctx context.Context, input service.RegisterInput) (*model.User, error)
 	Login(ctx context.Context, input service.LoginInput) (string, error)
-	GetUserById(ctx context.Context, id string) (*model.User, error)
+	GetUserByID(ctx context.Context, id string) (*model.User, error)
 }
 
 type AuthHandler struct {
@@ -56,13 +56,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 func (h *AuthHandler) GetProfile(c *gin.Context) {
-	userId, exists := c.Get("user_id")
+	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	user, err := h.authService.GetUserById(c.Request.Context(), userId.(string))
+	user, err := h.authService.GetUserByID(c.Request.Context(), userID.(string))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return

@@ -15,9 +15,9 @@ func TestUser_Validation(t *testing.T) {
 	testUUID := uuid.New()
 	now := time.Now()
 	const (
-		TEST_EMAIL     = "test@example.com"
-		TEST_PASSWORD  = "hashedpassword"
-		TEST_FULL_NAME = "Test User"
+		testEmail    = "test@example.com"
+		testPassword = "hashedpassword"
+		testFullName = "Test User"
 	)
 
 	tests := []struct {
@@ -30,9 +30,9 @@ func TestUser_Validation(t *testing.T) {
 			name: "valid user",
 			user: User{
 				ID:           testUUID,
-				Email:        TEST_EMAIL,
-				FullName:     TEST_FULL_NAME,
-				PasswordHash: TEST_PASSWORD,
+				Email:        testEmail,
+				FullName:     testFullName,
+				PasswordHash: testPassword,
 				CreatedAt:    now,
 				UpdatedAt:    now,
 			},
@@ -43,8 +43,8 @@ func TestUser_Validation(t *testing.T) {
 			user: User{
 				ID:           testUUID,
 				Email:        "",
-				FullName:     TEST_FULL_NAME,
-				PasswordHash: TEST_PASSWORD,
+				FullName:     testFullName,
+				PasswordHash: testPassword,
 				CreatedAt:    now,
 				UpdatedAt:    now,
 			},
@@ -56,8 +56,8 @@ func TestUser_Validation(t *testing.T) {
 			user: User{
 				ID:           testUUID,
 				Email:        "invalid-email",
-				FullName:     TEST_FULL_NAME,
-				PasswordHash: TEST_PASSWORD,
+				FullName:     testFullName,
+				PasswordHash: testPassword,
 				CreatedAt:    now,
 				UpdatedAt:    now,
 			},
@@ -68,8 +68,8 @@ func TestUser_Validation(t *testing.T) {
 			name: "missing password hash",
 			user: User{
 				ID:           testUUID,
-				Email:        TEST_EMAIL,
-				FullName:     TEST_FULL_NAME,
+				Email:        testEmail,
+				FullName:     testFullName,
 				PasswordHash: "",
 				CreatedAt:    now,
 				UpdatedAt:    now,
@@ -81,9 +81,9 @@ func TestUser_Validation(t *testing.T) {
 			name: "missing full name",
 			user: User{
 				ID:           testUUID,
-				Email:        TEST_EMAIL,
+				Email:        testEmail,
 				FullName:     "",
-				PasswordHash: TEST_PASSWORD,
+				PasswordHash: testPassword,
 				CreatedAt:    now,
 				UpdatedAt:    now,
 			},
@@ -94,9 +94,9 @@ func TestUser_Validation(t *testing.T) {
 			name: "zero value UUID",
 			user: User{
 				ID:           uuid.UUID{},
-				Email:        TEST_EMAIL,
-				FullName:     TEST_FULL_NAME,
-				PasswordHash: TEST_PASSWORD,
+				Email:        testEmail,
+				FullName:     testFullName,
+				PasswordHash: testPassword,
 				CreatedAt:    now,
 				UpdatedAt:    now,
 			},
@@ -107,9 +107,9 @@ func TestUser_Validation(t *testing.T) {
 			name: "zero value created time",
 			user: User{
 				ID:           testUUID,
-				Email:        TEST_EMAIL,
-				FullName:     TEST_FULL_NAME,
-				PasswordHash: TEST_PASSWORD,
+				Email:        testEmail,
+				FullName:     testFullName,
+				PasswordHash: testPassword,
 				CreatedAt:    time.Time{},
 				UpdatedAt:    time.Time{},
 			},
@@ -119,9 +119,9 @@ func TestUser_Validation(t *testing.T) {
 			name: "missing optional fields",
 			user: User{
 				ID:           testUUID,
-				Email:        TEST_EMAIL,
-				FullName:     TEST_FULL_NAME,
-				PasswordHash: TEST_PASSWORD,
+				Email:        testEmail,
+				FullName:     testFullName,
+				PasswordHash: testPassword,
 			},
 			wantErr: false,
 		},

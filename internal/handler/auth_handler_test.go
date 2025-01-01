@@ -35,7 +35,7 @@ func (m *MockService) Login(ctx context.Context, input service.LoginInput) (stri
 	return args.Get(0).(string), args.Error(1)
 }
 
-func (m *MockService) GetUserById(ctx context.Context, id string) (*model.User, error) {
+func (m *MockService) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -186,9 +186,9 @@ func TestAuthHandler_Register(t *testing.T) {
 
 func TestAuthHandler_Login(t *testing.T) {
 	const (
-		TEST_TOKEN    = "test-token"
-		TEST_EMAIL    = "test@example.com"
-		TEST_PASSWORD = "password"
+		testToken    = "test-token"
+		testEmail    = "test@example.com"
+		testPassword = "password"
 	)
 
 	tests := []struct {
@@ -201,25 +201,25 @@ func TestAuthHandler_Login(t *testing.T) {
 		{
 			name: "successful login",
 			input: service.LoginInput{
-				Email:    TEST_EMAIL,
-				Password: TEST_PASSWORD,
+				Email:    testEmail,
+				Password: testPassword,
 			},
 			mockFn: func(ms *MockService) {
 				ms.On("Login", mock.Anything, mock.MatchedBy(func(input service.LoginInput) bool {
-					return input.Email == TEST_EMAIL && input.Password == TEST_PASSWORD
-				})).Return(TEST_TOKEN, nil)
+					return input.Email == testEmail && input.Password == testPassword
+				})).Return(testToken, nil)
 			},
 			wantCode: http.StatusOK,
 		},
 		{
 			name: "auth_service error",
 			input: service.LoginInput{
-				Email:    TEST_EMAIL,
-				Password: TEST_PASSWORD,
+				Email:    testEmail,
+				Password: testPassword,
 			},
 			mockFn: func(ms *MockService) {
 				ms.On("Login", mock.Anything, mock.MatchedBy(func(input service.LoginInput) bool {
-					return input.Email == TEST_EMAIL && input.Password == TEST_PASSWORD
+					return input.Email == testEmail && input.Password == testPassword
 				})).Return("", errors.New("auth_service error"))
 			},
 			wantCode:    http.StatusBadRequest,
@@ -229,7 +229,7 @@ func TestAuthHandler_Login(t *testing.T) {
 			name: "invalid email",
 			input: service.LoginInput{
 				Email:    "",
-				Password: TEST_PASSWORD,
+				Password: testPassword,
 			},
 			wantCode:    http.StatusBadRequest,
 			errContains: "Error:Field validation for 'Email' failed",
@@ -237,7 +237,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		{
 			name: "invalid password",
 			input: service.LoginInput{
-				Email:    TEST_EMAIL,
+				Email:    testEmail,
 				Password: "",
 			},
 			wantCode:    http.StatusBadRequest,
@@ -268,7 +268,7 @@ func TestAuthHandler_Login(t *testing.T) {
 			assert.NotNil(t, response)
 
 			if tt.wantCode == http.StatusOK {
-				assert.Equal(t, TEST_TOKEN, response["token"])
+				assert.Equal(t, testToken, response["token"])
 			} else {
 				assert.Contains(t, response["error"], tt.errContains)
 			}
@@ -294,7 +294,7 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 				c.Set("user_id", mockUser.ID.String())
 			},
 			mockFn: func(ms *MockService) {
-				ms.On("GetUserById", mock.Anything, mockUser.ID.String()).
+				ms.On("GetUserByID", mock.Anything, mockUser.ID.String()).
 					Return(&mockUser, nil)
 			},
 			wantCode: http.StatusOK,
@@ -305,7 +305,7 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 				c.Set("user_id", mockUser.ID.String())
 			},
 			mockFn: func(ms *MockService) {
-				ms.On("GetUserById", mock.Anything, mockUser.ID.String()).
+				ms.On("GetUserByID", mock.Anything, mockUser.ID.String()).
 					Return(nil, errors.New("auth_service error"))
 			},
 			wantCode:    http.StatusNotFound,

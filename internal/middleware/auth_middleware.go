@@ -41,15 +41,15 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 			return
 		}
 
-		userId, hasUserId := claims["user_id"]
+		userID, hasUserID := claims["user_id"]
 		email, hasEmail := claims["email"]
-		if !hasUserId || userId == "" || !hasEmail || email == "" {
+		if !hasUserID || userID == "" || !hasEmail || email == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token claims"})
 			c.Abort()
 			return
 		}
 
-		c.Set("user_id", userId)
+		c.Set("user_id", userID)
 		c.Set("email", email)
 		c.Next()
 	}
