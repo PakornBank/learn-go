@@ -7,10 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func setupProtectedRoutes(router *gin.Engine, cfg *config.Config, authHandler *handler.AuthHandler) {
-	r := router.Group("/api")
-	r.Use(middleware.AuthMiddleware(cfg.JWTSecret))
+// setupProtectedRoutes adds authenticated API routes to the router.
+func setupProtectedRoutes(r *gin.Engine, cfg *config.Config, auth *handler.AuthHandler) {
+	api := r.Group("/api")
+	api.Use(middleware.AuthMiddleware(cfg.JWTSecret))
 	{
-		r.GET("/profile", authHandler.GetProfile)
+		api.GET("/profile", auth.GetProfile)
 	}
 }
