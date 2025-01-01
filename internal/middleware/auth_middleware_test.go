@@ -147,7 +147,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code)
 
-			var response map[string]string
+			var response map[string]interface{}
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 
