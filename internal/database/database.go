@@ -1,3 +1,4 @@
+// Package database provides database connection and configuration functionality.
 package database
 
 import (
@@ -9,6 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// NewDataBase creates a new database connection using the provided configuration.
 func NewDataBase(config *config.Config) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(config.DBURL()), &gorm.Config{})
 	if err != nil {
