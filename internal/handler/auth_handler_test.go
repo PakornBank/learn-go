@@ -162,7 +162,7 @@ func TestAuthHandler_Register(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code)
 
-			var response map[string]string
+			var response map[string]interface{}
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 
@@ -261,7 +261,7 @@ func TestAuthHandler_Login(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code)
 
-			var response map[string]string
+			var response map[string]interface{}
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 
@@ -344,7 +344,7 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 				assert.Equal(t, mockUser.UpdatedAt.Format(time.RFC3339Nano), response.UpdatedAt.Format(time.RFC3339Nano))
 				assert.Empty(t, response.PasswordHash)
 			} else {
-				var response map[string]string
+				var response map[string]interface{}
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				assert.NoError(t, err)
 
