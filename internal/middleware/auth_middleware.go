@@ -20,10 +20,10 @@ import (
 // claims are set in the Gin context.
 //
 // Parameters:
-// - jwtSecret: The secret key used to validate the JWT token.
+//   - jwtSecret: The secret key used to validate the JWT token.
 //
 // Returns:
-// - gin.HandlerFunc: A Gin middleware handler function.
+//   - gin.HandlerFunc: A Gin middleware handler function.
 //
 // The middleware performs the following checks:
 //  1. Ensures the "Authorization" header is present.
