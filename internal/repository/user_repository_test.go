@@ -14,9 +14,9 @@ import (
 )
 
 func setupTest(t *testing.T) (*sql.DB, *gorm.DB, sqlmock.Sqlmock, *UserRepository) {
-	sqlDB, gormDB, mock := testutil.DbMock(t)
+	sqlDB, gormDB, sqlMock := testutil.DbMock(t)
 	userRepo := NewUserRepository(gormDB)
-	return sqlDB, gormDB, mock, userRepo
+	return sqlDB, gormDB, sqlMock, userRepo
 }
 
 func TestNewUserRepository(t *testing.T) {
@@ -26,9 +26,6 @@ func TestNewUserRepository(t *testing.T) {
 }
 
 func TestUserRepository_Create(t *testing.T) {
-	sqlDB, _, mock, userRepo := setupTest(t)
-	defer sqlDB.Close()
-
 	mockUser := testutil.NewMockUser()
 
 	tests := []struct {
@@ -45,14 +42,14 @@ func TestUserRepository_Create(t *testing.T) {
 				PasswordHash: mockUser.PasswordHash,
 				FullName:     mockUser.FullName,
 			},
-			mockFn: func(mock sqlmock.Sqlmock) {
-				mock.ExpectBegin()
+			mockFn: func(sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
 				rows := sqlmock.NewRows([]string{"id", "created_at", "updated_at"}).
 					AddRow(mockUser.ID, mockUser.CreatedAt, mockUser.UpdatedAt)
-				mock.ExpectQuery(`INSERT INTO "users"`).
+				sqlMock.ExpectQuery(`INSERT INTO "users"`).
 					WithArgs(mockUser.Email, mockUser.PasswordHash, mockUser.FullName).
 					WillReturnRows(rows)
-				mock.ExpectCommit()
+				sqlMock.ExpectCommit()
 			},
 			wantErr: false,
 		},
@@ -63,12 +60,12 @@ func TestUserRepository_Create(t *testing.T) {
 				PasswordHash: mockUser.PasswordHash,
 				FullName:     mockUser.FullName,
 			},
-			mockFn: func(mock sqlmock.Sqlmock) {
-				mock.ExpectBegin()
-				mock.ExpectQuery(`INSERT INTO "users"`).
+			mockFn: func(sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				sqlMock.ExpectQuery(`INSERT INTO "users"`).
 					WithArgs(mockUser.Email, mockUser.PasswordHash, mockUser.FullName).
 					WillReturnError(sql.ErrConnDone)
-				mock.ExpectRollback()
+				sqlMock.ExpectRollback()
 			},
 			wantErr: true,
 			errType: sql.ErrConnDone,
@@ -77,7 +74,9 @@ func TestUserRepository_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockFn(mock)
+			sqlDB, _, sqlMock, userRepo := setupTest(t)
+			defer sqlDB.Close()
+			tt.mockFn(sqlMock)
 			err := userRepo.Create(context.Background(), tt.user)
 
 			if tt.wantErr {
@@ -90,53 +89,52 @@ func TestUserRepository_Create(t *testing.T) {
 				assert.NotZero(t, tt.user.UpdatedAt)
 			}
 
-			assert.NoError(t, mock.ExpectationsWereMet())
+			assert.NoError(t, sqlMock.ExpectationsWereMet())
 		})
 	}
 }
 
 func TestUserRepository_FindByEmail(t *testing.T) {
-	sqlDB, _, mock, userRepo := setupTest(t)
-	defer sqlDB.Close()
-
 	mockUser := testutil.NewMockUser()
 
 	tests := []struct {
-		name    string
-		mockFn  func(sqlmock.Sqlmock)
-		want    *model.User
-		wantErr bool
-		errType error
+		name     string
+		mockFn   func(sqlmock.Sqlmock)
+		wantUser *model.User
+		wantErr  bool
+		errType  error
 	}{
 		{
 			name: "user found",
-			mockFn: func(mock sqlmock.Sqlmock) {
+			mockFn: func(sqlMock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "full_name", "created_at", "updated_at"}).
 					AddRow(mockUser.ID, mockUser.Email, mockUser.PasswordHash, mockUser.FullName, mockUser.CreatedAt, mockUser.UpdatedAt)
-				mock.ExpectQuery(`SELECT .* FROM "users" WHERE email = \$1 (.+) LIMIT \$2`).
+				sqlMock.ExpectQuery(`SELECT .* FROM "users" WHERE email = \$1 (.+) LIMIT \$2`).
 					WithArgs(mockUser.Email, 1).
 					WillReturnRows(rows)
 			},
-			want:    &mockUser,
-			wantErr: false,
+			wantUser: &mockUser,
+			wantErr:  false,
 		},
 		{
 			name: "user not found",
-			mockFn: func(mock sqlmock.Sqlmock) {
+			mockFn: func(sqlMock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "full_name", "created_at", "updated_at"})
-				mock.ExpectQuery(`SELECT .* FROM "users" WHERE email = \$1 (.+) LIMIT \$2`).
+				sqlMock.ExpectQuery(`SELECT .* FROM "users" WHERE email = \$1 (.+) LIMIT \$2`).
 					WithArgs(mockUser.Email, 1).
 					WillReturnRows(rows)
 			},
-			want:    nil,
-			wantErr: true,
-			errType: gorm.ErrRecordNotFound,
+			wantUser: nil,
+			wantErr:  true,
+			errType:  gorm.ErrRecordNotFound,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockFn(mock)
+			sqlDB, _, sqlMock, userRepo := setupTest(t)
+			defer sqlDB.Close()
+			tt.mockFn(sqlMock)
 			got, err := userRepo.FindByEmail(context.Background(), mockUser.Email)
 
 			if tt.wantErr {
@@ -145,59 +143,58 @@ func TestUserRepository_FindByEmail(t *testing.T) {
 				assert.Nil(t, got)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
+				assert.Equal(t, tt.wantUser, got)
 			}
 
-			assert.NoError(t, mock.ExpectationsWereMet())
+			assert.NoError(t, sqlMock.ExpectationsWereMet())
 		})
 	}
 }
 
 func TestUserRepository_FindByID(t *testing.T) {
-	sqlDB, _, mock, userRepo := setupTest(t)
-	defer sqlDB.Close()
-
 	mockUser := testutil.NewMockUser()
 
 	tests := []struct {
-		name    string
-		id      uuid.UUID
-		mockFn  func(sqlmock.Sqlmock)
-		want    *model.User
-		wantErr bool
-		errType error
+		name     string
+		id       uuid.UUID
+		mockFn   func(sqlmock.Sqlmock)
+		wantUser *model.User
+		wantErr  bool
+		errType  error
 	}{
 		{
 			name: "user found",
 			id:   mockUser.ID,
-			mockFn: func(mock sqlmock.Sqlmock) {
+			mockFn: func(sqlMock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "full_name", "created_at", "updated_at"}).
 					AddRow(mockUser.ID, mockUser.Email, mockUser.PasswordHash, mockUser.FullName, mockUser.CreatedAt, mockUser.UpdatedAt)
-				mock.ExpectQuery(`SELECT .* FROM "users" WHERE id = \$1 (.+) LIMIT \$2`).
+				sqlMock.ExpectQuery(`SELECT .* FROM "users" WHERE id = \$1 (.+) LIMIT \$2`).
 					WithArgs(mockUser.ID, 1).
 					WillReturnRows(rows)
 			},
-			want:    &mockUser,
-			wantErr: false,
+			wantUser: &mockUser,
+			wantErr:  false,
 		},
 		{
 			name: "user not found",
 			id:   mockUser.ID,
-			mockFn: func(mock sqlmock.Sqlmock) {
+			mockFn: func(sqlMock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "email", "password_hash", "full_name", "created_at", "updated_at"})
-				mock.ExpectQuery(`SELECT .* FROM "users" WHERE id = \$1 (.+) LIMIT \$2`).
+				sqlMock.ExpectQuery(`SELECT .* FROM "users" WHERE id = \$1 (.+) LIMIT \$2`).
 					WithArgs(mockUser.ID, 1).
 					WillReturnRows(rows)
 			},
-			want:    nil,
-			wantErr: true,
-			errType: gorm.ErrRecordNotFound,
+			wantUser: nil,
+			wantErr:  true,
+			errType:  gorm.ErrRecordNotFound,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockFn(mock)
+			sqlDB, _, sqlMock, userRepo := setupTest(t)
+			defer sqlDB.Close()
+			tt.mockFn(sqlMock)
 			got, err := userRepo.FindByID(context.Background(), tt.id.String())
 
 			if tt.wantErr {
@@ -206,10 +203,10 @@ func TestUserRepository_FindByID(t *testing.T) {
 				assert.Nil(t, got)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.want, got)
+				assert.Equal(t, tt.wantUser, got)
 			}
 
-			assert.NoError(t, mock.ExpectationsWereMet())
+			assert.NoError(t, sqlMock.ExpectationsWereMet())
 		})
 	}
 }
