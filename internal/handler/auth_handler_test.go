@@ -77,7 +77,7 @@ func TestAuthHandler_Register(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       service.RegisterInput
-		mock        func(*MockService)
+		mockFn      func(*MockService)
 		wantCode    int
 		errContains string
 	}{
@@ -88,7 +88,7 @@ func TestAuthHandler_Register(t *testing.T) {
 				Password: "password",
 				FullName: user.FullName,
 			},
-			mock: func(ms *MockService) {
+			mockFn: func(ms *MockService) {
 				ms.On("Register", mock.Anything, mock.MatchedBy(func(in service.RegisterInput) bool {
 					return in.Email == user.Email &&
 						in.FullName == user.FullName &&
@@ -104,7 +104,7 @@ func TestAuthHandler_Register(t *testing.T) {
 				Password: "password",
 				FullName: user.FullName,
 			},
-			mock: func(ms *MockService) {
+			mockFn: func(ms *MockService) {
 				ms.On("Register", mock.Anything, mock.MatchedBy(func(in service.RegisterInput) bool {
 					return in.Email == user.Email &&
 						in.FullName == user.FullName &&
@@ -149,8 +149,8 @@ func TestAuthHandler_Register(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			router, mockService := setupTest(nil)
-			if tt.mock != nil {
-				tt.mock(mockService)
+			if tt.mockFn != nil {
+				tt.mockFn(mockService)
 			}
 
 			body, _ := json.Marshal(tt.input)
@@ -194,7 +194,7 @@ func TestAuthHandler_Login(t *testing.T) {
 	tests := []struct {
 		name        string
 		input       service.LoginInput
-		mock        func(*MockService)
+		mockFn      func(*MockService)
 		wantCode    int
 		errContains string
 	}{
@@ -204,7 +204,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				Email:    testEmail,
 				Password: testPassword,
 			},
-			mock: func(ms *MockService) {
+			mockFn: func(ms *MockService) {
 				ms.On("Login", mock.Anything, mock.MatchedBy(func(input service.LoginInput) bool {
 					return input.Email == testEmail && input.Password == testPassword
 				})).Return(testToken, nil)
@@ -217,7 +217,7 @@ func TestAuthHandler_Login(t *testing.T) {
 				Email:    testEmail,
 				Password: testPassword,
 			},
-			mock: func(ms *MockService) {
+			mockFn: func(ms *MockService) {
 				ms.On("Login", mock.Anything, mock.MatchedBy(func(input service.LoginInput) bool {
 					return input.Email == testEmail && input.Password == testPassword
 				})).Return("", errors.New("auth_service error"))
@@ -248,8 +248,8 @@ func TestAuthHandler_Login(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			router, mockService := setupTest(nil)
-			if tt.mock != nil {
-				tt.mock(mockService)
+			if tt.mockFn != nil {
+				tt.mockFn(mockService)
 			}
 
 			body, _ := json.Marshal(tt.input)
@@ -284,7 +284,7 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 	tests := []struct {
 		name        string
 		middleware  gin.HandlerFunc
-		mock        func(*MockService)
+		mockFn      func(*MockService)
 		wantCode    int
 		errContains string
 	}{
@@ -293,7 +293,7 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 			middleware: func(c *gin.Context) {
 				c.Set("user_id", user.ID.String())
 			},
-			mock: func(ms *MockService) {
+			mockFn: func(ms *MockService) {
 				ms.On("GetUserByID", mock.Anything, user.ID.String()).
 					Return(&user, nil)
 			},
@@ -304,7 +304,7 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 			middleware: func(c *gin.Context) {
 				c.Set("user_id", user.ID.String())
 			},
-			mock: func(ms *MockService) {
+			mockFn: func(ms *MockService) {
 				ms.On("GetUserByID", mock.Anything, user.ID.String()).
 					Return(nil, errors.New("auth_service error"))
 			},
@@ -321,8 +321,8 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			router, mockService := setupTest(tt.middleware)
-			if tt.mock != nil {
-				tt.mock(mockService)
+			if tt.mockFn != nil {
+				tt.mockFn(mockService)
 			}
 
 			req := httptest.NewRequest(http.MethodGet, "/api/profile", nil)
