@@ -13,7 +13,7 @@ func TestLoadConfig(t *testing.T) {
 	tests := []struct {
 		name        string
 		env         map[string]string
-		want        *Config
+		wantConfig  *Config
 		wantErr     bool
 		errContains string
 	}{
@@ -28,7 +28,7 @@ func TestLoadConfig(t *testing.T) {
 			env: map[string]string{
 				"JWT_SECRET": "test-secret",
 			},
-			want: &Config{
+			wantConfig: &Config{
 				DBHost:         "localhost",
 				DBUser:         "postgres",
 				DBPassword:     "",
@@ -51,7 +51,7 @@ func TestLoadConfig(t *testing.T) {
 				"SERVER_PORT": "5433",
 				"JWT_SECRET":  "test-secret",
 			},
-			want: &Config{
+			wantConfig: &Config{
 				DBHost:         "test-db-host",
 				DBUser:         "test-db-user",
 				DBPassword:     "test-db-password",
@@ -82,32 +82,32 @@ func TestLoadConfig(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.NotNil(t, got)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantConfig, got)
 		})
 	}
 }
 
 func TestGetEnv(t *testing.T) {
 	tests := []struct {
-		name     string
-		key      string
-		defValue string
-		envValue string
-		want     string
+		name       string
+		key        string
+		defValue   string
+		envValue   string
+		wantConfig string
 	}{
 		{
-			name:     "existing environment variable",
-			key:      "TEST_KEY",
-			defValue: "default",
-			envValue: "custom",
-			want:     "custom",
+			name:       "existing environment variable",
+			key:        "TEST_KEY",
+			defValue:   "default",
+			envValue:   "custom",
+			wantConfig: "custom",
 		},
 		{
-			name:     "non-existing environment variable",
-			key:      "TEST_KEY",
-			defValue: "default",
-			envValue: "",
-			want:     "default",
+			name:       "non-existing environment variable",
+			key:        "TEST_KEY",
+			defValue:   "default",
+			envValue:   "",
+			wantConfig: "default",
 		},
 	}
 
@@ -119,13 +119,13 @@ func TestGetEnv(t *testing.T) {
 			}
 
 			got := getEnv(tt.key, tt.defValue)
-			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantConfig, got)
 		})
 	}
 }
 
 func TestDBURL(t *testing.T) {
-	cfg := &Config{
+	config := &Config{
 		DBHost:     "test-host",
 		DBUser:     "test-user",
 		DBPassword: "test-password",
@@ -133,6 +133,6 @@ func TestDBURL(t *testing.T) {
 		DBPort:     "5432",
 	}
 
-	want := "host=test-host user=test-user password=test-password dbname=test-name port=5432 sslmode=disable"
-	assert.Equal(t, want, cfg.DBURL())
+	wantConfig := "host=test-host user=test-user password=test-password dbname=test-name port=5432 sslmode=disable"
+	assert.Equal(t, wantConfig, config.DBURL())
 }
