@@ -155,18 +155,15 @@ func TestUser_JSONSerialization(t *testing.T) {
 		jsonData, err := json.Marshal(user)
 		assert.NoError(t, err)
 
-		var unmarshaled map[string]interface{}
+		var unmarshaled User
 		err = json.Unmarshal(jsonData, &unmarshaled)
 		assert.NoError(t, err)
 
-		_, exists := unmarshaled["password_hash"]
-		assert.False(t, exists)
-
-		assert.Equal(t, user.ID.String(), unmarshaled["id"])
-		assert.Equal(t, user.Email, unmarshaled["email"])
-		assert.Equal(t, user.FullName, unmarshaled["full_name"])
-		assert.Equal(t, user.CreatedAt.Format(time.RFC3339Nano), unmarshaled["created_at"])
-		assert.Equal(t, user.UpdatedAt.Format(time.RFC3339Nano), unmarshaled["updated_at"])
-
+		assert.Empty(t, unmarshaled.PasswordHash)
+		assert.Equal(t, user.ID, unmarshaled.ID)
+		assert.Equal(t, user.Email, unmarshaled.Email)
+		assert.Equal(t, user.FullName, unmarshaled.FullName)
+		assert.Equal(t, user.CreatedAt.Truncate(time.Microsecond), unmarshaled.CreatedAt)
+		assert.Equal(t, user.UpdatedAt.Truncate(time.Microsecond), unmarshaled.UpdatedAt)
 	})
 }
