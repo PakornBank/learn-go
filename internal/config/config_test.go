@@ -11,17 +11,17 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	tests := []struct {
-		name    string
-		env     map[string]string
-		want    *Config
-		wantErr bool
-		errMsg  string
+		name        string
+		env         map[string]string
+		want        *Config
+		wantErr     bool
+		errContains string
 	}{
 		{
-			name:    "default values without JWT secret",
-			env:     map[string]string{},
-			wantErr: true,
-			errMsg:  "jwt secret must be set in environment",
+			name:        "default values without JWT secret",
+			env:         map[string]string{},
+			wantErr:     true,
+			errContains: "jwt secret must be set in environment",
 		},
 		{
 			name: "default values with JWT secret",
@@ -76,7 +76,7 @@ func TestLoadConfig(t *testing.T) {
 			got, err := LoadConfig()
 			if tt.wantErr {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.errMsg)
+				assert.Contains(t, err.Error(), tt.errContains)
 				return
 			}
 
