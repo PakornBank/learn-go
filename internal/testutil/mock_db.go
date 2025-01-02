@@ -11,7 +11,7 @@ import (
 )
 
 func DbMock(t *testing.T) (*sql.DB, *gorm.DB, sqlmock.Sqlmock) {
-	sqlDB, mock, err := sqlmock.New()
+	sqlDB, sqlMock, err := sqlmock.New()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,5 +25,5 @@ func DbMock(t *testing.T) (*sql.DB, *gorm.DB, sqlmock.Sqlmock) {
 		t.Fatal(err)
 	}
 
-	return sqlDB, gormDB, mock
+	return sqlDB, gormDB, sqlMock
 }
