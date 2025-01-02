@@ -1,0 +1,94 @@
+run:
+  timeout: 5m
+
+  tests: true
+
+  max-issues-per-linter: 50
+
+  max-same-issues: 3
+
+linters:
+  enable:
+    - gofmt
+    - golint
+    - govet
+    - errcheck
+    - staticcheck
+    - gosimple
+    - ineffassign
+    - unconvert
+    - misspell
+    - gocyclo
+    - dupl
+    - goconst
+    - unparam
+    - nakedret
+    - prealloc
+    - varnamelen
+    - unused
+
+  disable:
+    - maligned
+    - lll
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+
+  dupl:
+    threshold: 100
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+  misspell:
+    locale: US
+
+  nakedret:
+    max-func-lines: 30
+
+  unparam:
+    check-exported: false
+
+  varnamelen:
+    check-map-keyset: true
+
+    ignore-names:
+      - err
+      - tt
+      - i
+      - x
+      - y
+      - id
+      - db
+      - tx
+
+    ignore-decls:
+      - c echo.Context
+      - c *gin.Context
+      - t testing.T
+      - f *foo.Bar
+      - e error
+      - w http.ResponseWriter
+      - w *httptest.ResponseRecorder
+      - r *http.Request
+      - mu sync.Mutex
+
+issues:
+  max-same-issues: 3
+
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - dupl
+        - gosec
+
+    - text: "should have comment or be unexported"
+      linters:
+        - golint
+
+    - text: "TODO:"
+      linters:
+        - govet
