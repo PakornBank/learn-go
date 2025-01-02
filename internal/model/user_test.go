@@ -10,15 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testEmail    = "test@example.com"
+	testPassword = "hashedpassword"
+	testFullName = "Test User"
+)
+
 func TestUser_Validation(t *testing.T) {
 	validate := validator.New()
 	testUUID := uuid.New()
 	now := time.Now()
-	const (
-		testEmail    = "test@example.com"
-		testPassword = "hashedpassword"
-		testFullName = "Test User"
-	)
 
 	tests := []struct {
 		name        string
@@ -144,9 +145,9 @@ func TestUser_Validation(t *testing.T) {
 func TestUser_JSONSerialization(t *testing.T) {
 	user := User{
 		ID:           uuid.New(),
-		Email:        "test@example.com",
-		PasswordHash: "hashedpassword",
-		FullName:     "Test User",
+		Email:        testEmail,
+		PasswordHash: testPassword,
+		FullName:     testFullName,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
