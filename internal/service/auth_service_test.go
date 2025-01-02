@@ -19,21 +19,21 @@ type MockRepository struct {
 	mock.Mock
 }
 
-func (m *MockRepository) Create(ctx context.Context, user *model.User) error {
-	args := m.Called(ctx, user)
+func (r *MockRepository) Create(ctx context.Context, user *model.User) error {
+	args := r.Called(ctx, user)
 	return args.Error(0)
 }
 
-func (m *MockRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
-	args := m.Called(ctx, email)
+func (r *MockRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	args := r.Called(ctx, email)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
-func (m *MockRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
-	args := m.Called(ctx, id)
+func (r *MockRepository) FindByID(ctx context.Context, id string) (*model.User, error) {
+	args := r.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
