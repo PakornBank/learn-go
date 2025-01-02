@@ -1,3 +1,4 @@
+// Package handler implements HTTP request handlers for authentication endpoints.
 package handler
 
 import (
@@ -9,20 +10,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Service defines the authentication operations required by AuthHandler.
 type Service interface {
 	Register(ctx context.Context, input service.RegisterInput) (*model.User, error)
 	Login(ctx context.Context, input service.LoginInput) (string, error)
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 }
 
+// AuthHandler handles HTTP requests for authentication operations.
 type AuthHandler struct {
-	authService Service
+	service Service
 }
 
-func NewAuthHandler(authService Service) *AuthHandler {
-	return &AuthHandler{authService: authService}
+// NewAuthHandler creates a new AuthHandler with the provided authentication service.
+func NewAuthHandler(s Service) *AuthHandler {
+	return &AuthHandler{service: s}
 }
 
+// Register handles user registration requests.
 func (h *AuthHandler) Register(c *gin.Context) {
 	var input service.RegisterInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -30,7 +35,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	user, err := h.authService.Register(c.Request.Context(), input)
+	user, err := h.service.Register(c.Request.Context(), input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -39,6 +44,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
+// Login handles user authentication requests.
 func (h *AuthHandler) Login(c *gin.Context) {
 	var input service.LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -46,7 +52,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.authService.Login(c.Request.Context(), input)
+	token, err := h.service.Login(c.Request.Context(), input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -55,14 +61,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+// GetProfile retrieves the authenticated user's profile.
 func (h *AuthHandler) GetProfile(c *gin.Context) {
-	userID, exists := c.Get("user_id")
+	id, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	user, err := h.authService.GetUserByID(c.Request.Context(), userID.(string))
+	user, err := h.service.GetUserByID(c.Request.Context(), id.(string))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
