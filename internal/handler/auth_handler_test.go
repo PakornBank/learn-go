@@ -75,11 +75,11 @@ func TestAuthHandler_Register(t *testing.T) {
 	user := testutil.NewMockUser()
 
 	tests := []struct {
-		name     string
-		input    service.RegisterInput
-		mock     func(*MockService)
-		wantCode int
-		errMsg   string
+		name        string
+		input       service.RegisterInput
+		mock        func(*MockService)
+		wantCode    int
+		errContains string
 	}{
 		{
 			name: "successful registration",
@@ -111,8 +111,8 @@ func TestAuthHandler_Register(t *testing.T) {
 						in.Password == "password"
 				})).Return(nil, errors.New("auth_service error"))
 			},
-			wantCode: http.StatusBadRequest,
-			errMsg:   "auth_service error",
+			wantCode:    http.StatusBadRequest,
+			errContains: "auth_service error",
 		},
 		{
 			name: "invalid email",
@@ -121,8 +121,8 @@ func TestAuthHandler_Register(t *testing.T) {
 				Password: "password",
 				FullName: user.FullName,
 			},
-			wantCode: http.StatusBadRequest,
-			errMsg:   "Error:Field validation for 'Email' failed",
+			wantCode:    http.StatusBadRequest,
+			errContains: "Error:Field validation for 'Email' failed",
 		},
 		{
 			name: "invalid password",
@@ -131,8 +131,8 @@ func TestAuthHandler_Register(t *testing.T) {
 				Password: "",
 				FullName: user.FullName,
 			},
-			wantCode: http.StatusBadRequest,
-			errMsg:   "Error:Field validation for 'Password' failed",
+			wantCode:    http.StatusBadRequest,
+			errContains: "Error:Field validation for 'Password' failed",
 		},
 		{
 			name: "invalid full name",
@@ -141,8 +141,8 @@ func TestAuthHandler_Register(t *testing.T) {
 				Password: "password",
 				FullName: "",
 			},
-			wantCode: http.StatusBadRequest,
-			errMsg:   "Error:Field validation for 'FullName' failed",
+			wantCode:    http.StatusBadRequest,
+			errContains: "Error:Field validation for 'FullName' failed",
 		},
 	}
 
@@ -176,7 +176,7 @@ func TestAuthHandler_Register(t *testing.T) {
 				assert.Equal(t, user.UpdatedAt.Format(time.RFC3339Nano), res["updated_at"])
 				assert.Empty(t, res["password_hash"])
 			} else {
-				assert.Contains(t, res["error"], tt.errMsg)
+				assert.Contains(t, res["error"], tt.errContains)
 			}
 
 			mockService.AssertExpectations(t)
@@ -192,11 +192,11 @@ func TestAuthHandler_Login(t *testing.T) {
 	)
 
 	tests := []struct {
-		name     string
-		input    service.LoginInput
-		mock     func(*MockService)
-		wantCode int
-		errMsg   string
+		name        string
+		input       service.LoginInput
+		mock        func(*MockService)
+		wantCode    int
+		errContains string
 	}{
 		{
 			name: "successful login",
@@ -222,8 +222,8 @@ func TestAuthHandler_Login(t *testing.T) {
 					return input.Email == testEmail && input.Password == testPassword
 				})).Return("", errors.New("auth_service error"))
 			},
-			wantCode: http.StatusBadRequest,
-			errMsg:   "auth_service error",
+			wantCode:    http.StatusBadRequest,
+			errContains: "auth_service error",
 		},
 		{
 			name: "invalid email",
@@ -231,8 +231,8 @@ func TestAuthHandler_Login(t *testing.T) {
 				Email:    "",
 				Password: testPassword,
 			},
-			wantCode: http.StatusBadRequest,
-			errMsg:   "Error:Field validation for 'Email' failed",
+			wantCode:    http.StatusBadRequest,
+			errContains: "Error:Field validation for 'Email' failed",
 		},
 		{
 			name: "invalid password",
@@ -240,8 +240,8 @@ func TestAuthHandler_Login(t *testing.T) {
 				Email:    testEmail,
 				Password: "",
 			},
-			wantCode: http.StatusBadRequest,
-			errMsg:   "Error:Field validation for 'Password' failed",
+			wantCode:    http.StatusBadRequest,
+			errContains: "Error:Field validation for 'Password' failed",
 		},
 	}
 
@@ -270,7 +270,7 @@ func TestAuthHandler_Login(t *testing.T) {
 			if tt.wantCode == http.StatusOK {
 				assert.Equal(t, testToken, res["token"])
 			} else {
-				assert.Contains(t, res["error"], tt.errMsg)
+				assert.Contains(t, res["error"], tt.errContains)
 			}
 
 			mockService.AssertExpectations(t)
@@ -282,11 +282,11 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 	user := testutil.NewMockUser()
 
 	tests := []struct {
-		name       string
-		middleware gin.HandlerFunc
-		mock       func(*MockService)
-		wantCode   int
-		errMsg     string
+		name        string
+		middleware  gin.HandlerFunc
+		mock        func(*MockService)
+		wantCode    int
+		errContains string
 	}{
 		{
 			name: "successful profile retrieval",
@@ -308,13 +308,13 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 				ms.On("GetUserByID", mock.Anything, user.ID.String()).
 					Return(nil, errors.New("auth_service error"))
 			},
-			wantCode: http.StatusNotFound,
-			errMsg:   "auth_service error",
+			wantCode:    http.StatusNotFound,
+			errContains: "auth_service error",
 		},
 		{
-			name:     "no user_id in context",
-			wantCode: http.StatusUnauthorized,
-			errMsg:   "unauthorized",
+			name:        "no user_id in context",
+			wantCode:    http.StatusUnauthorized,
+			errContains: "unauthorized",
 		},
 	}
 
@@ -348,7 +348,7 @@ func TestAuthHandler_GetProfile(t *testing.T) {
 				err := json.Unmarshal(w.Body.Bytes(), &res)
 				assert.NoError(t, err)
 
-				assert.Contains(t, res["error"], tt.errMsg)
+				assert.Contains(t, res["error"], tt.errContains)
 			}
 
 			mockService.AssertExpectations(t)
