@@ -43,24 +43,24 @@ func (ms *MockService) GetUserByID(ctx context.Context, id string) (*model.User,
 	return args.Get(0).(*model.User), args.Error(1)
 }
 
-func setupTest(m gin.HandlerFunc) (*gin.Engine, *MockService) {
+func setupTest(middleware gin.HandlerFunc) (*gin.Engine, *MockService) {
 	gin.SetMode(gin.TestMode)
 
 	mockservice := new(MockService)
 	handler := NewAuthHandler(mockservice)
 
-	r := gin.New()
-	rg := r.Group("/api")
-	if m != nil {
-		rg.Use(m)
+	router := gin.New()
+	group := router.Group("/api")
+	if middleware != nil {
+		group.Use(middleware)
 	}
 	{
-		rg.POST("/register", handler.Register)
-		rg.POST("/login", handler.Login)
-		rg.GET("/profile", handler.GetProfile)
+		group.POST("/register", handler.Register)
+		group.POST("/login", handler.Login)
+		group.GET("/profile", handler.GetProfile)
 	}
 
-	return r, mockservice
+	return router, mockservice
 }
 
 func TestNewAuthHandler(t *testing.T) {
