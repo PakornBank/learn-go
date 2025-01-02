@@ -5,10 +5,8 @@ import (
 
 	"github.com/PakornBank/learn-go/internal/config"
 	"github.com/PakornBank/learn-go/internal/database"
-	"github.com/PakornBank/learn-go/internal/handler"
-	"github.com/PakornBank/learn-go/internal/repository"
 	"github.com/PakornBank/learn-go/internal/router"
-	"github.com/PakornBank/learn-go/internal/service"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -22,11 +20,8 @@ func main() {
 		log.Fatal("Failed to initialize database:", err)
 	}
 
-	userRepo := repository.NewUserRepository(db)
-	authService := service.NewAuthService(userRepo, config)
-	authHandler := handler.NewAuthHandler(authService)
-
-	r := router.SetupRouter(config, authHandler)
+	r := gin.Default()
+	router.NewRouter(r, db, config).SetupRoutes()
 
 	log.Printf("Server running on port %s\n", config.ServerPort)
 	if err := r.Run(":" + config.ServerPort); err != nil {

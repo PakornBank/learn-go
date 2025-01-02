@@ -2,15 +2,24 @@ package router
 
 import (
 	"github.com/PakornBank/learn-go/internal/config"
-	"github.com/PakornBank/learn-go/internal/handler"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func SetupRouter(cfg *config.Config, authHandler *handler.AuthHandler) *gin.Engine {
-	r := gin.Default()
+type Router struct {
+	group  *gin.RouterGroup
+	db     *gorm.DB
+	config *config.Config
+}
 
-	setupAuthRoutes(r, authHandler)
-	setupProtectedRoutes(r, cfg, authHandler)
+func NewRouter(r *gin.Engine, db *gorm.DB, config *config.Config) *Router {
+	return &Router{
+		group:  r.Group("/api"),
+		db:     db,
+		config: config,
+	}
+}
 
-	return r
+func (r *Router) SetupRoutes() {
+	r.setupAuthRoutes()
 }
