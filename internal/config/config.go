@@ -29,13 +29,20 @@ type Config struct {
 // If the .env file exists but cannot be loaded, it returns an error.
 //
 // The following environment variables are used to populate the Config struct:
-// - DB_HOST: Database host (default: "localhost")
-// - DB_USER: Database user (default: "postgres")
-// - DB_PASSWORD: Database password (default: "")
-// - DB_NAME: Database name (default: "go_auth_db")
-// - DB_PORT: Database port (default: "5432")
-// - SERVER_PORT: Server port (default: "8080")
-// - JWT_SECRET: JWT secret key (default: "your-secret-key")
+//
+//   - DB_HOST: Database host (default: "localhost")
+//
+//   - DB_USER: Database user (default: "postgres")
+//
+//   - DB_PASSWORD: Database password (default: "")
+//
+//   - DB_NAME: Database name (default: "go_auth_db")
+//
+//   - DB_PORT: Database port (default: "5432")
+//
+//   - SERVER_PORT: Server port (default: "8080")
+//
+//   - JWT_SECRET: JWT secret key (default: "your-secret-key")
 //
 // If the JWT_SECRET environment variable is not set (i.e., it is "your-secret-key"),
 // the function returns an error indicating that the JWT secret must be set.
