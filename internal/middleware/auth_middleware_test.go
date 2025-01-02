@@ -12,35 +12,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupTest(jwtSecret string) *gin.Engine {
+const (
+	testSecret   = "test-secret"
+	bearerPrefix = "Bearer "
+)
+
+func setupTest() *gin.Engine {
 	gin.SetMode(gin.TestMode)
-	r := gin.New()
-	r.Use(AuthMiddleware(jwtSecret))
-	r.GET("/test", func(c *gin.Context) {
+	router := gin.New()
+	router.Use(AuthMiddleware(testSecret))
+	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"user_id": c.MustGet("user_id"),
 			"email":   c.MustGet("email"),
 		})
 	})
-	return r
+	return router
 }
 
-func generateTestToken(userID string, email string, jwtSecret string, expiry time.Duration) string {
+func generateTestToken(userID string, email string, expiry time.Duration) string {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"email":   email,
 		"exp":     time.Now().Add(expiry).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, _ := token.SignedString([]byte(jwtSecret))
+	signedToken, _ := token.SignedString([]byte(testSecret))
 	return signedToken
 }
 
 func TestAuthMiddleware(t *testing.T) {
 	const (
-		testSecret = "test-secret"
-		testID     = "test-user-id"
-		testEmail  = "test@email.com"
+		testID    = "test-user-id"
+		testEmail = "test@email.com"
 	)
 
 	tests := []struct {
@@ -52,14 +56,14 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "valid token",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken(testID, testEmail, testSecret, time.Hour)
+				return bearerPrefix + generateTestToken(testID, testEmail, time.Hour)
 			},
 			wantCode: http.StatusOK,
 		},
 		{
 			name: "expired token",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken(testID, testEmail, testSecret, -time.Hour)
+				return bearerPrefix + generateTestToken(testID, testEmail, -time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token",
@@ -67,7 +71,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "invalid token",
 			generateAuthHeader: func() string {
-				return "Bearer invalid-token"
+				return bearerPrefix + "invalid-token"
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token",
@@ -83,7 +87,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "missing Bearer prifix",
 			generateAuthHeader: func() string {
-				return generateTestToken(testID, testEmail, testSecret, time.Hour)
+				return generateTestToken(testID, testEmail, time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid authorization header format",
@@ -97,7 +101,7 @@ func TestAuthMiddleware(t *testing.T) {
 					"exp":     time.Now().Add(time.Hour).Unix(),
 				})
 				signedToken, _ := token.SignedString(jwt.UnsafeAllowNoneSignatureType)
-				return "Bearer " + signedToken
+				return bearerPrefix + signedToken
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token",
@@ -110,7 +114,7 @@ func TestAuthMiddleware(t *testing.T) {
 				}
 				token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 				signedToken, _ := token.SignedString([]byte(testSecret))
-				return "Bearer " + signedToken
+				return bearerPrefix + signedToken
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token claims",
@@ -118,7 +122,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "missing user_id claim",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken("", testEmail, testSecret, time.Hour)
+				return bearerPrefix + generateTestToken("", testEmail, time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token claims",
@@ -126,7 +130,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "missing email claim",
 			generateAuthHeader: func() string {
-				return "Bearer " + generateTestToken(testID, "", testSecret, time.Hour)
+				return bearerPrefix + generateTestToken(testID, "", time.Hour)
 			},
 			wantCode:    http.StatusUnauthorized,
 			errContains: "invalid token claims",
@@ -135,7 +139,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			router := setupTest(testSecret)
+			router := setupTest()
 
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
 			if authHeader := tt.generateAuthHeader(); authHeader != "" {
@@ -147,15 +151,15 @@ func TestAuthMiddleware(t *testing.T) {
 
 			assert.Equal(t, tt.wantCode, w.Code)
 
-			var response map[string]interface{}
-			err := json.Unmarshal(w.Body.Bytes(), &response)
+			var res map[string]interface{}
+			err := json.Unmarshal(w.Body.Bytes(), &res)
 			assert.NoError(t, err)
 
 			if tt.wantCode == http.StatusOK {
-				assert.Equal(t, testID, response["user_id"])
-				assert.Equal(t, testEmail, response["email"])
+				assert.Equal(t, testID, res["user_id"])
+				assert.Equal(t, testEmail, res["email"])
 			} else {
-				assert.Contains(t, response["error"], tt.errContains)
+				assert.Contains(t, res["error"], tt.errContains)
 			}
 		})
 	}
